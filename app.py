@@ -32,12 +32,12 @@ st.sidebar.title('Layers')
 # Legend display using markdown for colors
 st.sidebar.header('Legend')
 st.sidebar.markdown("""
-- **No erosion detected**: ![ ](https://via.placeholder.com/15/000000/000000?text=+) 
-- **0.01 - 1.00**: ![ ](https://via.placeholder.com/15/ffffb3/ffffb3?text=+) 
-- **1.01 - 10.00**: ![ ](https://via.placeholder.com/15/8dd3c7/8dd3c7?text=+) 
-- **10.01 - 100.00**: ![ ](https://via.placeholder.com/15/bebada/bebada?text=+) 
-- **>100.00**: ![ ](https://via.placeholder.com/15/fb8072/fb8072?text=+) 
-""")
+- **No erosion detected**: <span style='height: 15px; width: 15px; background-color: #000000; border-radius: 50%; display: inline-block;'></span> 
+- **0.01 - 1.00**: <span style='height: 15px; width: 15px; background-color: #ffffb3; border-radius: 50%; display: inline-block;'></span> 
+- **1.01 - 10.00**: <span style='height: 15px; width: 15px; background-color: #8dd3c7; border-radius: 50%; display: inline-block;'></span> 
+- **10.01 - 100.00**: <span style='height: 15px; width: 15px; background-color: #bebada; border-radius: 50%; display: inline-block;'></span> 
+- **>100.00**: <span style='height: 15px; width: 15px; background-color: #fb8072; border-radius: 50%; display: inline-block;'></span> 
+""", unsafe_allow_html=True)
 # Map setup
 view_state = pdk.ViewState(latitude=df['latitude'].mean(), longitude=df['longitude'].mean(), zoom=6)
 
