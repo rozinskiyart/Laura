@@ -1,6 +1,11 @@
 import streamlit as st
 import pandas as pd
 import pydeck as pdk
+import rasterio
+import geopandas as gpd
+from shapely.geometry import mapping
+import rasterio.features
+from shapely.geometry import shape
 
 # Load your data
 
@@ -24,13 +29,25 @@ def load_data():
 
     return data
 
+def load_raster_data():
+    bounds = (-8.64987813845309, 49.8651469811328, 1.7602362981620097, 60.860695047384)  # Manually set bounds
+    return bounds
+
+@st.cache_data
+def load_geojson(geojson_path):
+    import geopandas as gpd
+    return gpd.read_file(geojson_path)
+
+
+# bounds = load_raster_data()
+
 df = load_data()
 
 # Streamlit page setup
 st.title('Soil Erosion Data Visualization')
-st.sidebar.title('Layers')
+
 # Legend display using markdown for colors
-st.sidebar.header('Legend')
+st.sidebar.title('Legend')
 st.sidebar.markdown("""
 - **No erosion detected**: <span style='height: 15px; width: 15px; background-color: #000000; border-radius: 50%; display: inline-block;'></span> 
 - **0.01 - 1.00**: <span style='height: 15px; width: 15px; background-color: #ffffb3; border-radius: 50%; display: inline-block;'></span> 
@@ -38,29 +55,45 @@ st.sidebar.markdown("""
 - **10.01 - 100.00**: <span style='height: 15px; width: 15px; background-color: #bebada; border-radius: 50%; display: inline-block;'></span> 
 - **>100.00**: <span style='height: 15px; width: 15px; background-color: #fb8072; border-radius: 50%; display: inline-block;'></span> 
 """, unsafe_allow_html=True)
+st.sidebar.title('Layers')
 # Map setup
 view_state = pdk.ViewState(latitude=df['latitude'].mean(), longitude=df['longitude'].mean(), zoom=6)
 
 # Adding layers based on checkboxes
-if st.sidebar.checkbox('Show Erosion Sites', True):
-    erosion_layer = pdk.Layer(
-        'ScatterplotLayer',
-        data=df,
-        get_position=['longitude', 'latitude'],
-        get_color='color',
-        get_radius='size',
-        pickable=True
-    )
-else:
-    erosion_layer = None
 
-layers = [layer for layer in [erosion_layer] if layer is not None]
+erosion_layer = pdk.Layer(
+    'ScatterplotLayer',
+    data=df,
+    get_position=['longitude', 'latitude'],
+    get_color='color',
+    get_radius='size',
+    pickable=True
+)
+
+if st.sidebar.checkbox('Show DEM', True):
+    geojson_path = 'Reprojected_Rasterized_DEM.geojson'
+
+    geojson_data = load_geojson(geojson_path)
+    
+    bitmap_layer = pdk.Layer(
+    "GeoJsonLayer",
+    data=geojson_data,
+    opacity=0.01,
+    stroked=True,
+    filled=True,
+    extruded=False,
+    wireframe=False
+)
+else:
+    bitmap_layer = None
+
+
 
 # Display map
 st.pydeck_chart(pdk.Deck(
     map_style='mapbox://styles/mapbox/light-v9',
     initial_view_state=view_state,
-    layers=layers,
+    layers=[erosion_layer, bitmap_layer],
     tooltip={"text": "Erosion Rate: {Erosion_Rate}"}
 ))
 
