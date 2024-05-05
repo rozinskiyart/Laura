@@ -6,6 +6,7 @@ import geopandas as gpd
 from shapely.geometry import mapping
 import rasterio.features
 from shapely.geometry import shape
+import geopandas as gpd
 
 # Load your data
 
@@ -35,8 +36,15 @@ def load_raster_data():
 
 @st.cache_data
 def load_geojson(geojson_path):
-    import geopandas as gpd
+    
     return gpd.read_file(geojson_path)
+
+
+def load_geopackage(gpkg_path):
+    """Load a layer from a GeoPackage file."""
+
+    return gpd.read_file(gpkg_path)
+    
 
 
 # bounds = load_raster_data()
@@ -70,11 +78,11 @@ erosion_layer = pdk.Layer(
     pickable=True
 )
 
-if st.sidebar.checkbox('Show DEM', True):
+if st.sidebar.checkbox('DEM', False):
     geojson_path = 'Reprojected_Rasterized_DEM.geojson'
 
     geojson_data = load_geojson(geojson_path)
-    
+    print(geojson_data)
     bitmap_layer = pdk.Layer(
     "GeoJsonLayer",
     data=geojson_data,
@@ -87,13 +95,31 @@ if st.sidebar.checkbox('Show DEM', True):
 else:
     bitmap_layer = None
 
+if st.sidebar.checkbox('GPKG', True):
+    geojson_path_UK_LC_Grid_SoilErosion1 = 'UK_LC_Grid_SoilErosion1.geojson'
+
+    geojson_UK_LC_Grid_SoilErosion1 = load_geopackage(geojson_path_UK_LC_Grid_SoilErosion1)
+    print(geojson_UK_LC_Grid_SoilErosion1['geometry'])
+    geojson_UK_layer = pdk.Layer(
+        "GeoJsonLayer",
+        data=geojson_UK_LC_Grid_SoilErosion1,
+        opacity=0.8,
+        stroked=True,
+        filled=True,
+        extruded=False,
+        get_fill_color=[255, 0, 0, 128],  # Red color with 50% opacity
+        get_line_color=[0, 0, 0, 255]  # Set to True if you want 3D extrusion
+    )
+else:
+    geojson_UK_layer = None
+
 
 
 # Display map
 st.pydeck_chart(pdk.Deck(
     map_style='mapbox://styles/mapbox/light-v9',
     initial_view_state=view_state,
-    layers=[erosion_layer, bitmap_layer],
+    layers=[erosion_layer, bitmap_layer, geojson_UK_layer],
     tooltip={"text": "Erosion Rate: {Erosion_Rate}"}
 ))
 
