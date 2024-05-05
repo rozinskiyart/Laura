@@ -6,7 +6,7 @@ import geopandas as gpd
 from shapely.geometry import mapping
 import rasterio.features
 from shapely.geometry import shape
-import geopandas as gpd
+import json
 
 # Load your data
 
@@ -30,9 +30,7 @@ def load_data():
 
     return data
 
-def load_raster_data():
-    bounds = (-8.64987813845309, 49.8651469811328, 1.7602362981620097, 60.860695047384)  # Manually set bounds
-    return bounds
+
 
 @st.cache_data
 def load_geojson(geojson_path):
@@ -41,7 +39,6 @@ def load_geojson(geojson_path):
 
 
 def load_geopackage(gpkg_path):
-    """Load a layer from a GeoPackage file."""
 
     return gpd.read_file(gpkg_path)
     
@@ -95,20 +92,23 @@ if st.sidebar.checkbox('DEM', False):
 else:
     bitmap_layer = None
 
-if st.sidebar.checkbox('GPKG', True):
-    geojson_path_UK_LC_Grid_SoilErosion1 = 'UK_LC_Grid_SoilErosion1.geojson'
+if st.sidebar.checkbox('Landcover', True):
+    # geojson_path_UK_LC_Grid_SoilErosion1 = 'UK_LC_Grid_SoilErosion1.geojson'
 
-    geojson_UK_LC_Grid_SoilErosion1 = load_geopackage(geojson_path_UK_LC_Grid_SoilErosion1)
-    print(geojson_UK_LC_Grid_SoilErosion1['geometry'])
+    # geojson_UK_LC_Grid_SoilErosion1 = load_geopackage(geojson_path_UK_LC_Grid_SoilErosion1)
+
+    with open("UK_LC_Grid_SoilErosion1.geojson", "r") as geo_file:
+        geojson_data = json.load(geo_file)
+
     geojson_UK_layer = pdk.Layer(
         "GeoJsonLayer",
-        data=geojson_UK_LC_Grid_SoilErosion1,
+        data = geojson_data,
         opacity=0.8,
         stroked=True,
         filled=True,
-        extruded=False,
-        get_fill_color=[255, 0, 0, 128],  # Red color with 50% opacity
-        get_line_color=[0, 0, 0, 255]  # Set to True if you want 3D extrusion
+        extruded=True,
+        wireframe=True,
+        get_radius=1000,
     )
 else:
     geojson_UK_layer = None
@@ -119,7 +119,6 @@ else:
 st.pydeck_chart(pdk.Deck(
     map_style='mapbox://styles/mapbox/light-v9',
     initial_view_state=view_state,
-    layers=[erosion_layer, bitmap_layer, geojson_UK_layer],
-    tooltip={"text": "Erosion Rate: {Erosion_Rate}"}
+    layers=[erosion_layer, bitmap_layer, geojson_UK_layer]
 ))
 
