@@ -43,6 +43,12 @@ def load_geopackage(gpkg_path):
     return gpd.read_file(gpkg_path)
     
 
+def process_rainfall(station_file):
+    # Load data
+    df = pd.read_csv(station_file)
+    # Assume you calculate the average or total rainfall here
+    average_rainfall = df['value'].mean()
+    return average_rainfall
 
 # bounds = load_raster_data()
 
@@ -52,13 +58,18 @@ df = load_data()
 st.title('Soil Erosion Data Visualization')
 
 # Legend display using markdown for colors
-st.sidebar.title('Legend')
+st.sidebar.title('Erosion Legend')
 st.sidebar.markdown("""
 - **No erosion detected**: <span style='height: 15px; width: 15px; background-color: #000000; border-radius: 50%; display: inline-block;'></span> 
 - **0.01 - 1.00**: <span style='height: 15px; width: 15px; background-color: #ffffb3; border-radius: 50%; display: inline-block;'></span> 
 - **1.01 - 10.00**: <span style='height: 15px; width: 15px; background-color: #8dd3c7; border-radius: 50%; display: inline-block;'></span> 
 - **10.01 - 100.00**: <span style='height: 15px; width: 15px; background-color: #bebada; border-radius: 50%; display: inline-block;'></span> 
 - **>100.00**: <span style='height: 15px; width: 15px; background-color: #fb8072; border-radius: 50%; display: inline-block;'></span> 
+""", unsafe_allow_html=True)
+st.sidebar.title('Layers Legend')
+st.sidebar.markdown("""
+- **Landcover**: <span style='height: 15px; width: 15px; background-color: #000000; border-radius: 50%; display: inline-block;'></span> 
+- **Rainfall**: <span style='height: 15px; width: 15px; background-color: blue; border-radius: 50%; display: inline-block;'></span> 
 """, unsafe_allow_html=True)
 st.sidebar.title('Layers')
 # Map setup
@@ -115,10 +126,32 @@ else:
 
 
 
+
+if st.sidebar.checkbox('Rainfall', True):
+    stations_df = pd.read_csv('RainfallStations.csv')
+
+
+
+    # Add rainfall data to stations DataFrame
+    stations_df['Average_Rainfall'] = stations_df['Stations'].apply(lambda x: process_rainfall(f"Rainfall/{x}.csv"))
+    
+
+    rainfall_layer = pdk.Layer(
+    'ScatterplotLayer',
+    data=stations_df,
+    get_position=['Longitude', 'Latitude'],
+    get_color='[0, 0, 255, 160]',  
+    get_radius='Average_Rainfall * 1000'  
+)
+else:
+    rainfall_layer = None
+
+
+
 # Display map
 st.pydeck_chart(pdk.Deck(
     map_style='mapbox://styles/mapbox/light-v9',
     initial_view_state=view_state,
-    layers=[erosion_layer, bitmap_layer, geojson_UK_layer]
+    layers=[erosion_layer, bitmap_layer, geojson_UK_layer, rainfall_layer]
 ))
 
